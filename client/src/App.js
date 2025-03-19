@@ -4,6 +4,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import { AuthProvider } from './context/AuthContext';
+import { TaskProvider } from './context/TaskContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -17,7 +18,9 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <TaskProvider>
+                  <Dashboard />
+                </TaskProvider>
               </ProtectedRoute>
             }
           />
