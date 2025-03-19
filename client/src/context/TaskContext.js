@@ -7,7 +7,7 @@ import {
   updateTaskStatus,
   addCommentToTask
 } from '../services/api';
-import useAuth from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
 
 export const TaskContext = createContext();
 
