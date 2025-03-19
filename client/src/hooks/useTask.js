@@ -7,8 +7,15 @@ const useTask = () => {
   if (!context) {
     throw new Error('useTask must be used within a TaskProvider');
   }
+
+  // Rename the functions to match what we're using in the TaskList component
+  const { editTask: updateTask, removeTask: deleteTask, ...rest } = context;
   
-  return context;
+  return {
+    ...rest,
+    updateTask,
+    deleteTask
+  };
 };
 
 export default useTask; 
