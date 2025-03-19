@@ -23,13 +23,37 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database connection
+// Print MongoDB connection string (with password masked)
+const mongoUriForLogging = process.env.MONGODB_URI ? 
+  process.env.MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@') : 
+  'No MongoDB URI provided';
+console.log('Connecting to MongoDB:', mongoUriForLogging);
+
+// Database connection with improved options and error handling
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/task-management', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
+  serverSelectionTimeoutMS: 15000, // Increase timeout to 15 seconds
+  socketTimeoutMS: 45000,         // Increase socket timeout
 })
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+.then(() => console.log('✅ Connected to MongoDB successfully'))
+.catch(err => {
+  console.error('❌ MongoDB connection error:', err);
+  console.error('Connection details:', {
+    errorName: err.name,
+    errorCode: err.code,
+    errorMessage: err.message
+  });
+  // Exit process on connection failure to force restart
+  process.exit(1);
+});
+
+// Add connection event listeners
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error after initial connection:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.warn('MongoDB disconnected');
+});
 
 // Routes
 app.use('/api/users', userRoutes);
