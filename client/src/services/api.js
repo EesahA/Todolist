@@ -59,7 +59,37 @@ export const getAllTasks = () => apiClient.get('/tasks');
 export const getTaskById = (id) => apiClient.get(`/tasks/${id}`);
 export const createTask = (taskData) => apiClient.post('/tasks', taskData);
 export const updateTask = (id, taskData) => apiClient.put(`/tasks/${id}`, taskData);
-export const deleteTask = (id) => apiClient.delete(`/tasks/${id}`);
+export const deleteTask = async (id) => {
+  try {
+    console.log('Sending delete request for task:', id);
+    const token = localStorage.getItem('token');
+    console.log('Auth token present:', !!token);
+    
+    const response = await apiClient.delete(`/tasks/${id}`);
+    console.log('Delete response:', response);
+    
+    if (response.status !== 200) {
+      throw new Error(`Server returned status ${response.status}`);
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('Delete request failed:', {
+      error: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      details: error.toString()
+    });
+    
+    // Throw a more informative error
+    throw new Error(
+      error.response?.data?.message || 
+      error.response?.data?.error || 
+      error.message || 
+      'Failed to delete task'
+    );
+  }
+};
 export const updateTaskStatus = (id, status) => apiClient.patch(`/tasks/${id}/status`, { status });
 export const addCommentToTask = (id, content) => apiClient.post(`/tasks/${id}/comments`, { content });
 
