@@ -12,20 +12,26 @@ const generateToken = (userId) => {
 // Register new user
 exports.register = async (req, res) => {
   try {
+    console.log('Registration request received:', req.body);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
     const { username, email, password } = req.body;
+    console.log('Extracted user data:', { username, email, password: '******' });
 
     // Check if user already exists
     let user = await User.findOne({ $or: [{ email }, { username }] });
     if (user) {
+      console.log('User already exists:', { email, username });
       return res.status(400).json({ message: 'User already exists' });
     }
 
     // Create new user
+    console.log('Creating new user...');
     user = new User({
       username,
       email,
@@ -33,9 +39,12 @@ exports.register = async (req, res) => {
     });
 
     await user.save();
+    console.log('User saved successfully');
 
     // Generate token
+    console.log('Generating token with secret:', process.env.JWT_SECRET ? 'Secret exists' : 'Secret missing');
     const token = generateToken(user._id);
+    console.log('Token generated successfully');
 
     res.status(201).json({
       token,
@@ -46,7 +55,8 @@ exports.register = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Server error', details: error.message });
   }
 };
 
