@@ -19,7 +19,7 @@ import {
   Select,
   MenuItem
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { format } from 'date-fns';
 import useTask from '../hooks/useTask';
 
@@ -108,8 +108,8 @@ const EditTaskDialog = ({ open, handleClose, task, onSave }) => {
   );
 };
 
-const TaskList = () => {
-  const { tasks, loading, error, updateTask, deleteTask } = useTask();
+const TaskList = ({ onCreateTask }) => {
+  const { tasks, loading, error, updateTask, deleteTask, fetchTasks } = useTask();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
@@ -134,6 +134,8 @@ const TaskList = () => {
   const handleEditSave = async (editedTask) => {
     try {
       await updateTask(editedTask._id, editedTask);
+      await fetchTasks();
+      handleEditClose();
     } catch (err) {
       console.error('Failed to update task:', err);
     }
@@ -142,9 +144,19 @@ const TaskList = () => {
   const handleDeleteClick = async (taskId) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       try {
+        console.log('Attempting to delete task:', taskId);
         await deleteTask(taskId);
+        console.log('Task deleted successfully');
+        await fetchTasks();
       } catch (err) {
         console.error('Failed to delete task:', err);
+        console.error('Error details:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status
+        });
+        // Show error to user
+        alert(`Failed to delete task: ${err.response?.data?.message || err.message}`);
       }
     }
   };
@@ -191,7 +203,9 @@ const TaskList = () => {
                 p: 2, 
                 bgcolor: 'grey.100',
                 height: '100%',
-                minHeight: '70vh'
+                minHeight: '70vh',
+                display: 'flex',
+                flexDirection: 'column'
               }}
             >
               <Typography 
@@ -218,7 +232,14 @@ const TaskList = () => {
                   color={getStatusColor(status)}
                 />
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: 2,
+                flexGrow: 1,
+                minHeight: 0,
+                overflow: 'auto'
+              }}>
                 {tasksByStatus[status].map((task) => (
                   <Card key={task._id} sx={{ bgcolor: 'white' }}>
                     <CardContent>
@@ -274,6 +295,15 @@ const TaskList = () => {
                   </Card>
                 ))}
               </Box>
+              <Button
+                startIcon={<AddIcon />}
+                onClick={() => onCreateTask(status)}
+                sx={{ mt: 2 }}
+                variant="text"
+                fullWidth
+              >
+                Add Task
+              </Button>
             </Paper>
           </Grid>
         ))}
