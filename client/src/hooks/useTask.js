@@ -9,13 +9,14 @@ const useTask = () => {
   }
 
   // Rename the functions to match what we're using in the TaskList component
-  const { editTask: updateTask, removeTask: deleteTask, addComment, ...rest } = context;
+  const { editTask: updateTask, removeTask: deleteTask, addComment, getTaskById, ...rest } = context;
   
   return {
     ...rest,
     updateTask,
     deleteTask,
-    addComment
+    addComment,
+    getTaskById
   };
 };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -20,7 +20,7 @@ import { format } from 'date-fns';
 import { Send as SendIcon, Close as CloseIcon } from '@mui/icons-material';
 import useTask from '../hooks/useTask';
 
-const TaskDetails = ({ task, open, onClose, onCommentAdded }) => {
+const TaskDetails = ({ task: initialTask, open, onClose, onCommentAdded }) => {
   const [newComment, setNewComment] = useState('');
   const [error, setError] = useState('');
   const { addComment } = useTask();
@@ -34,11 +34,11 @@ const TaskDetails = ({ task, open, onClose, onCommentAdded }) => {
     if (!newComment.trim()) return;
 
     try {
-      await addComment(task._id, newComment.trim());
+      await addComment(initialTask._id, newComment.trim());
       console.log('Comment submitted successfully');
       setNewComment('');
       if (onCommentAdded) {
-        onCommentAdded();
+        onCommentAdded(); // This will trigger a task list refresh
       }
     } catch (err) {
       console.error('Error adding comment:', err);
@@ -46,11 +46,13 @@ const TaskDetails = ({ task, open, onClose, onCommentAdded }) => {
     }
   };
 
+  if (!initialTask) return null;
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">{task.title}</Typography>
+          <Typography variant="h6">{initialTask.title}</Typography>
           <IconButton onClick={onClose} size="small">
             <CloseIcon />
           </IconButton>
@@ -61,24 +63,24 @@ const TaskDetails = ({ task, open, onClose, onCommentAdded }) => {
         <Box mb={3}>
           <Box display="flex" alignItems="center" gap={1} mb={1}>
             <Avatar 
-              src={getAvatarUrl(task.createdBy?.username)} 
-              alt={task.createdBy?.username || 'Unknown'}
+              src={getAvatarUrl(initialTask.createdBy?.username)} 
+              alt={initialTask.createdBy?.username || 'Unknown'}
             />
             <Typography variant="subtitle2" color="textSecondary">
-              Created by {task.createdBy?.username || 'Unknown'} on {format(new Date(task.createdAt), 'MMM d, yyyy')}
+              Created by {initialTask.createdBy?.username || 'Unknown'} on {format(new Date(initialTask.createdAt), 'MMM d, yyyy')}
             </Typography>
           </Box>
           
           <Typography variant="body1" paragraph>
-            {task.description || 'No description provided'}
+            {initialTask.description || 'No description provided'}
           </Typography>
 
-          {task.deadline && (
+          {initialTask.deadline && (
             <Typography 
               variant="body2" 
-              color={new Date(task.deadline) < new Date() ? 'error' : 'textSecondary'}
+              color={new Date(initialTask.deadline) < new Date() ? 'error' : 'textSecondary'}
             >
-              Due: {format(new Date(task.deadline), 'MMM d, yyyy')}
+              Due: {format(new Date(initialTask.deadline), 'MMM d, yyyy')}
             </Typography>
           )}
         </Box>
@@ -91,37 +93,30 @@ const TaskDetails = ({ task, open, onClose, onCommentAdded }) => {
           </Typography>
           
           <List>
-            {task.comments && task.comments.length > 0 ? (
-              task.comments.map((comment, index) => {
-                console.log('Comment data:', {
-                  content: comment.content,
-                  user: comment.user,
-                  createdAt: comment.createdAt
-                });
-                return (
-                  <ListItem key={index} alignItems="flex-start">
-                    <ListItemAvatar>
-                      <Avatar 
-                        src={getAvatarUrl(comment.user?.username)}
-                        alt={comment.user?.username || 'Unknown'}
-                      />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Box display="flex" justifyContent="space-between">
-                          <Typography variant="subtitle2">
-                            {comment.user?.username || 'Unknown'}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            {format(new Date(comment.createdAt), 'MMM d, yyyy h:mm a')}
-                          </Typography>
-                        </Box>
-                      }
-                      secondary={comment.content}
+            {initialTask.comments && initialTask.comments.length > 0 ? (
+              initialTask.comments.map((comment, index) => (
+                <ListItem key={index} alignItems="flex-start">
+                  <ListItemAvatar>
+                    <Avatar 
+                      src={getAvatarUrl(comment.user?.username)}
+                      alt={comment.user?.username || 'Unknown'}
                     />
-                  </ListItem>
-                );
-              })
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Box display="flex" justifyContent="space-between">
+                        <Typography variant="subtitle2">
+                          {comment.user?.username || 'Unknown'}
+                        </Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          {format(new Date(comment.createdAt), 'MMM d, yyyy h:mm a')}
+                        </Typography>
+                      </Box>
+                    }
+                    secondary={comment.content}
+                  />
+                </ListItem>
+              ))
             ) : (
               <Typography color="textSecondary">No comments yet</Typography>
             )}

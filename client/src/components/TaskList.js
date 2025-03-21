@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Card, 
@@ -122,6 +122,16 @@ const TaskList = ({ onCreateTask }) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+
+  // Update selectedTask when tasks change
+  useEffect(() => {
+    if (selectedTask) {
+      const updatedTask = tasks.find(t => t._id === selectedTask._id);
+      if (updatedTask) {
+        setSelectedTask(updatedTask);
+      }
+    }
+  }, [tasks, selectedTask]);
 
   const isOverdue = (deadline) => {
     if (!deadline) return false;
