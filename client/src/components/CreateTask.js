@@ -27,7 +27,7 @@ const CreateTask = ({ open, onClose, onTaskCreated, initialStatus = 'Backlog' })
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const { user } = useAuth();
-  const { fetchTasks } = useTask();
+  const { fetchTasks, viewMode } = useTask();
 
   useEffect(() => {
     setStatus(initialStatus);
@@ -61,14 +61,17 @@ const CreateTask = ({ open, onClose, onTaskCreated, initialStatus = 'Backlog' })
       const response = await createTask(taskData);
       console.log('Task created:', response.data);
 
-      setSuccess('Task created successfully!');
+      // Close the dialog first
+      onClose();
+      
+      // Then update the task list with current view mode
+      await fetchTasks(viewMode);
+      
+      // Reset the form
       setTitle('');
       setDescription('');
       setDeadline(null);
       setStatus(initialStatus);
-      
-      // Fetch updated tasks list
-      await fetchTasks();
       
       if (onTaskCreated) {
         onTaskCreated(response.data);
