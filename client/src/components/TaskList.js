@@ -22,6 +22,7 @@ import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/ico
 import { format, isPast, startOfDay } from 'date-fns';
 import useTask from '../hooks/useTask';
 import TaskDetails from './TaskDetails';
+import TaskCard from './TaskCard';
 
 const EditTaskDialog = ({ open, handleClose, task, onSave }) => {
   const [editedTask, setEditedTask] = useState({
@@ -123,15 +124,19 @@ const TaskList = ({ onCreateTask }) => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
   // Update selectedTask when tasks change
   useEffect(() => {
     if (selectedTask) {
-      const updatedTask = tasks.find(t => t._id === selectedTask._id);
+      const updatedTask = tasks.find(task => task._id === selectedTask._id);
       if (updatedTask) {
         setSelectedTask(updatedTask);
       }
     }
-  }, [tasks, selectedTask]);
+  }, [tasks]);
 
   const isOverdue = (deadline) => {
     if (!deadline) return false;
@@ -213,9 +218,27 @@ const TaskList = ({ onCreateTask }) => {
     setDetailsOpen(true);
   };
 
-  const handleDetailsClose = () => {
-    setDetailsOpen(false);
-    setSelectedTask(null);
+  const handleDragStart = (e, task) => {
+    e.dataTransfer.setData('taskId', task._id);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (e, newStatus) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('taskId');
+    const taskToUpdate = tasks.find(task => task._id === taskId);
+    
+    if (taskToUpdate && taskToUpdate.status !== newStatus) {
+      try {
+        await updateTask(taskId, { ...taskToUpdate, status: newStatus });
+        fetchTasks(); // Refresh the task list
+      } catch (error) {
+        console.error('Error updating task status:', error);
+      }
+    }
   };
 
   return (
@@ -223,15 +246,17 @@ const TaskList = ({ onCreateTask }) => {
       <Grid container spacing={2}>
         {statusOrder.map((status) => (
           <Grid item xs={3} key={status}>
-            <Paper
-              sx={{
-                p: 2,
+            <Paper 
+              sx={{ 
+                p: 2, 
                 bgcolor: 'grey.100',
-                height: '100%',
+                height: '100%', 
                 minHeight: '70vh',
                 display: 'flex',
                 flexDirection: 'column'
               }}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, status)}
             >
               <Typography 
                 variant="h6" 
@@ -270,6 +295,8 @@ const TaskList = ({ onCreateTask }) => {
                       }
                     }}
                     onClick={() => handleTaskClick(task)}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, task)}
                   >
                     <CardContent>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -347,7 +374,7 @@ const TaskList = ({ onCreateTask }) => {
         <TaskDetails
           task={selectedTask}
           open={detailsOpen}
-          onClose={handleDetailsClose}
+          onClose={() => setDetailsOpen(false)}
           onCommentAdded={fetchTasks}
         />
       )}
