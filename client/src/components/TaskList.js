@@ -21,9 +21,29 @@ import {
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { format, isPast, startOfDay } from 'date-fns';
 import useTask from '../hooks/useTask';
+import TaskDetails from './TaskDetails';
 
 const EditTaskDialog = ({ open, handleClose, task, onSave }) => {
-  const [editedTask, setEditedTask] = useState(task);
+  const [editedTask, setEditedTask] = useState({
+    title: '',
+    description: '',
+    status: 'Backlog',
+    deadline: null,
+    ...task
+  });
+
+  // Update editedTask when task prop changes
+  React.useEffect(() => {
+    if (task) {
+      setEditedTask({
+        title: '',
+        description: '',
+        status: 'Backlog',
+        deadline: null,
+        ...task
+      });
+    }
+  }, [task]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,6 +58,9 @@ const EditTaskDialog = ({ open, handleClose, task, onSave }) => {
     handleClose();
   };
 
+  // Don't render the dialog if there's no task
+  if (!open) return null;
+
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>Edit Task</DialogTitle>
@@ -47,7 +70,7 @@ const EditTaskDialog = ({ open, handleClose, task, onSave }) => {
             name="title"
             label="Title"
             fullWidth
-            value={editedTask.title}
+            value={editedTask.title || ''}
             onChange={handleChange}
           />
           <TextField
@@ -56,7 +79,7 @@ const EditTaskDialog = ({ open, handleClose, task, onSave }) => {
             fullWidth
             multiline
             rows={4}
-            value={editedTask.description}
+            value={editedTask.description || ''}
             onChange={handleChange}
           />
           <TextField
@@ -72,7 +95,7 @@ const EditTaskDialog = ({ open, handleClose, task, onSave }) => {
             <InputLabel>Status</InputLabel>
             <Select
               name="status"
-              value={editedTask.status}
+              value={editedTask.status || 'Backlog'}
               onChange={handleChange}
               label="Status"
             >
@@ -98,6 +121,7 @@ const TaskList = ({ onCreateTask }) => {
   const { tasks, loading, error, updateTask, deleteTask, fetchTasks } = useTask();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const isOverdue = (deadline) => {
     if (!deadline) return false;
@@ -174,6 +198,16 @@ const TaskList = ({ onCreateTask }) => {
     }
   };
 
+  const handleTaskClick = (task) => {
+    setSelectedTask(task);
+    setDetailsOpen(true);
+  };
+
+  const handleDetailsClose = () => {
+    setDetailsOpen(false);
+    setSelectedTask(null);
+  };
+
   return (
     <>
       <Grid container spacing={2}>
@@ -219,8 +253,13 @@ const TaskList = ({ onCreateTask }) => {
                   <Card
                     key={task._id}
                     sx={{
-                      bgcolor: 'white'
+                      bgcolor: 'white',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        boxShadow: 3
+                      }
                     }}
+                    onClick={() => handleTaskClick(task)}
                   >
                     <CardContent>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -247,17 +286,22 @@ const TaskList = ({ onCreateTask }) => {
                             </Typography>
                           )}
                         </Box>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box 
+                          sx={{ 
+                            display: 'flex', 
+                            gap: 1 
+                          }}
+                          onClick={(e) => e.stopPropagation()} // Prevent card click when clicking buttons
+                        >
                           <IconButton 
-                            size="small"
+                            size="small" 
                             onClick={() => handleEditClick(task)}
                           >
                             <EditIcon fontSize="small" />
                           </IconButton>
                           <IconButton 
-                            size="small"
+                            size="small" 
                             onClick={() => handleDeleteClick(task._id)}
-                            color="error"
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
@@ -281,12 +325,20 @@ const TaskList = ({ onCreateTask }) => {
           </Grid>
         ))}
       </Grid>
+
+      <EditTaskDialog
+        open={editDialogOpen}
+        handleClose={handleEditClose}
+        task={selectedTask}
+        onSave={handleEditSave}
+      />
+
       {selectedTask && (
-        <EditTaskDialog
-          open={editDialogOpen}
-          handleClose={handleEditClose}
+        <TaskDetails
           task={selectedTask}
-          onSave={handleEditSave}
+          open={detailsOpen}
+          onClose={handleDetailsClose}
+          onCommentAdded={fetchTasks}
         />
       )}
     </>
