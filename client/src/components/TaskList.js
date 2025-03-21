@@ -23,6 +23,11 @@ import { format, isPast, startOfDay } from 'date-fns';
 import useTask from '../hooks/useTask';
 import TaskDetails from './TaskDetails';
 import TaskCard from './TaskCard';
+import { useAuth } from '../hooks/useAuth';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import ToggleButton from '@mui/material/ToggleButton';
+import GroupIcon from '@mui/icons-material/Group';
+import PersonIcon from '@mui/icons-material/Person';
 
 const EditTaskDialog = ({ open, handleClose, task, onSave }) => {
   const [editedTask, setEditedTask] = useState({
@@ -119,7 +124,8 @@ const EditTaskDialog = ({ open, handleClose, task, onSave }) => {
 };
 
 const TaskList = ({ onCreateTask }) => {
-  const { tasks, loading, error, updateTask, deleteTask, fetchTasks } = useTask();
+  const { tasks, loading, error, updateTask, deleteTask, fetchTasks, viewMode, updateViewMode } = useTask();
+  const { user } = useAuth();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -137,6 +143,12 @@ const TaskList = ({ onCreateTask }) => {
       }
     }
   }, [tasks]);
+
+  const handleViewModeChange = (event, newMode) => {
+    if (newMode !== null) {
+      updateViewMode(newMode);
+    }
+  };
 
   const isOverdue = (deadline) => {
     if (!deadline) return false;
@@ -241,8 +253,33 @@ const TaskList = ({ onCreateTask }) => {
     }
   };
 
+  const handleCreateTask = (status) => {
+    // If onCreateTask is provided, call it with the status and current user
+    if (onCreateTask) {
+      onCreateTask(status);
+    }
+  };
+
   return (
     <>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <ToggleButtonGroup
+          value={viewMode}
+          exclusive
+          onChange={handleViewModeChange}
+          aria-label="board view mode"
+        >
+          <ToggleButton value="team" aria-label="team board">
+            <GroupIcon sx={{ mr: 1 }} />
+            Team Board
+          </ToggleButton>
+          <ToggleButton value="personal" aria-label="personal board">
+            <PersonIcon sx={{ mr: 1 }} />
+            My Board
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+
       <Grid container spacing={2}>
         {statusOrder.map((status) => (
           <Grid item xs={3} key={status}>
@@ -350,7 +387,7 @@ const TaskList = ({ onCreateTask }) => {
                 {onCreateTask && (
                   <Button
                     startIcon={<AddIcon />}
-                    onClick={() => onCreateTask(status)}
+                    onClick={() => handleCreateTask(status)}
                     fullWidth
                     sx={{ mt: 2 }}
                   >

@@ -5,13 +5,21 @@ const mongoose = require('mongoose');
 // Get all tasks
 exports.getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find()
+    let query = {};
+    
+    // If viewMode is 'personal', only return tasks created by the current user
+    if (req.query.viewMode === 'personal') {
+      query.createdBy = req.user._id;
+    }
+
+    const tasks = await Task.find(query)
       .populate('createdBy', 'username email')
       .populate('assignedTo', 'username email')
       .populate('comments.user', 'username email')
       .sort({ createdAt: -1 });
     res.json(tasks);
   } catch (error) {
+    console.error('Error in getAllTasks:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

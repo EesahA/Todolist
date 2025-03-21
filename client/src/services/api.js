@@ -55,7 +55,9 @@ export const authService = {
 };
 
 // Tasks API
-export const getAllTasks = () => apiClient.get('/tasks');
+export const getAllTasks = (viewMode = 'team') => {
+  return apiClient.get(`/tasks?viewMode=${viewMode}`);
+};
 export const getTaskById = (id) => apiClient.get(`/tasks/${id}`);
 export const createTask = (taskData) => apiClient.post('/tasks', taskData);
 export const updateTask = (id, taskData) => apiClient.put(`/tasks/${id}`, taskData);

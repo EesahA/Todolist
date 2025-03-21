@@ -17,22 +17,29 @@ export const TaskProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { isAuthenticated } = useAuth();
+  const [viewMode, setViewMode] = useState('team');
 
   // Fetch all tasks
-  const fetchTasks = useCallback(async () => {
+  const fetchTasks = useCallback(async (mode = viewMode) => {
     if (!isAuthenticated) return;
     
     try {
       setLoading(true);
       setError(null);
-      const response = await getAllTasks();
+      const response = await getAllTasks(mode);
       setTasks(response.data);
       setLoading(false);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch tasks');
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, viewMode]);
+
+  // Update view mode
+  const updateViewMode = useCallback((mode) => {
+    setViewMode(mode);
+    fetchTasks(mode);
+  }, [fetchTasks]);
 
   // Get task by ID
   const getTaskById = async (id) => {
@@ -48,9 +55,9 @@ export const TaskProvider = ({ children }) => {
   // Initial fetch of tasks
   useEffect(() => {
     if (isAuthenticated) {
-      fetchTasks();
+      fetchTasks(viewMode);
     }
-  }, [isAuthenticated, fetchTasks]);
+  }, [isAuthenticated, fetchTasks, viewMode]);
 
   // Add a new task
   const addTask = async (taskData) => {
@@ -58,7 +65,7 @@ export const TaskProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       const response = await createTask(taskData);
-      setTasks([response.data, ...tasks]);
+      await fetchTasks(viewMode); // Refresh the list with current view mode
       setLoading(false);
       return response.data;
     } catch (err) {
@@ -149,7 +156,9 @@ export const TaskProvider = ({ children }) => {
         changeTaskStatus,
         addComment,
         getTasksByStatus,
-        getTaskById
+        getTaskById,
+        viewMode,
+        updateViewMode
       }}
     >
       {children}
