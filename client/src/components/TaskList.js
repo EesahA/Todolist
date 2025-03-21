@@ -4,7 +4,6 @@ import {
   Card, 
   CardContent, 
   Typography, 
-  Chip,
   Grid,
   Paper,
   IconButton,
@@ -20,7 +19,7 @@ import {
   MenuItem
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
-import { format } from 'date-fns';
+import { format, isPast, startOfDay } from 'date-fns';
 import useTask from '../hooks/useTask';
 
 const EditTaskDialog = ({ open, handleClose, task, onSave }) => {
@@ -70,19 +69,6 @@ const EditTaskDialog = ({ open, handleClose, task, onSave }) => {
             InputLabelProps={{ shrink: true }}
           />
           <FormControl fullWidth>
-            <InputLabel>Priority</InputLabel>
-            <Select
-              name="priority"
-              value={editedTask.priority}
-              onChange={handleChange}
-              label="Priority"
-            >
-              <MenuItem value="low">Low</MenuItem>
-              <MenuItem value="medium">Medium</MenuItem>
-              <MenuItem value="high">High</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl fullWidth>
             <InputLabel>Status</InputLabel>
             <Select
               name="status"
@@ -112,6 +98,20 @@ const TaskList = ({ onCreateTask }) => {
   const { tasks, loading, error, updateTask, deleteTask, fetchTasks } = useTask();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+
+  const isOverdue = (deadline) => {
+    if (!deadline) return false;
+    const today = startOfDay(new Date());
+    const taskDeadline = startOfDay(new Date(deadline));
+    return isPast(taskDeadline) && taskDeadline < today;
+  };
+
+  // Group tasks by status in specific order
+  const statusOrder = ['Backlog', 'Blocked', 'In Progress', 'Complete'];
+  const tasksByStatus = statusOrder.reduce((acc, status) => {
+    acc[status] = tasks.filter(task => task.status === status);
+    return acc;
+  }, {});
 
   if (loading) {
     return <Typography>Loading tasks...</Typography>;
@@ -161,19 +161,6 @@ const TaskList = ({ onCreateTask }) => {
     }
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high':
-        return 'error';
-      case 'medium':
-        return 'warning';
-      case 'low':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'Complete':
@@ -187,20 +174,14 @@ const TaskList = ({ onCreateTask }) => {
     }
   };
 
-  const statusOrder = ['Blocked', 'Backlog', 'In Progress', 'Complete'];
-  const tasksByStatus = statusOrder.reduce((acc, status) => {
-    acc[status] = tasks.filter(task => task.status === status);
-    return acc;
-  }, {});
-
   return (
     <>
       <Grid container spacing={2}>
         {statusOrder.map((status) => (
           <Grid item xs={3} key={status}>
-            <Paper 
-              sx={{ 
-                p: 2, 
+            <Paper
+              sx={{
+                p: 2,
                 bgcolor: 'grey.100',
                 height: '100%',
                 minHeight: '70vh',
@@ -225,12 +206,6 @@ const TaskList = ({ onCreateTask }) => {
                 }}
               >
                 {status}
-                <Chip 
-                  label={tasksByStatus[status].length} 
-                  size="small" 
-                  sx={{ ml: 1 }}
-                  color={getStatusColor(status)}
-                />
               </Typography>
               <Box sx={{ 
                 display: 'flex', 
@@ -241,69 +216,67 @@ const TaskList = ({ onCreateTask }) => {
                 overflow: 'auto'
               }}>
                 {tasksByStatus[status].map((task) => (
-                  <Card key={task._id} sx={{ bgcolor: 'white' }}>
+                  <Card
+                    key={task._id}
+                    sx={{
+                      bgcolor: 'white'
+                    }}
+                  >
                     <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'medium' }}>
                             {task.title}
                           </Typography>
+                          {task.description && (
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                              {task.description}
+                            </Typography>
+                          )}
+                          {task.deadline && (
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                mt: 1,
+                                color: isOverdue(task.deadline) ? 'error.main' : 'text.secondary',
+                                fontWeight: isOverdue(task.deadline) ? 'medium' : 'regular'
+                              }}
+                            >
+                              Due: {format(new Date(task.deadline), 'MMM d, yyyy')}
+                              {isOverdue(task.deadline) && ' (Overdue)'}
+                            </Typography>
+                          )}
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
                           <IconButton 
-                            size="small" 
+                            size="small"
                             onClick={() => handleEditClick(task)}
-                            sx={{ color: 'primary.main' }}
                           >
                             <EditIcon fontSize="small" />
                           </IconButton>
                           <IconButton 
-                            size="small" 
+                            size="small"
                             onClick={() => handleDeleteClick(task._id)}
-                            sx={{ color: 'error.main' }}
+                            color="error"
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
-                          <Chip 
-                            label={task.priority} 
-                            color={getPriorityColor(task.priority)}
-                            size="small"
-                          />
                         </Box>
                       </Box>
-                      
-                      {task.description && (
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          {task.description}
-                        </Typography>
-                      )}
-                      
-                      {task.deadline && (
-                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-                          Due: {format(new Date(task.deadline), 'dd/MM/yyyy')}
-                        </Typography>
-                      )}
-                      
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary" 
-                        sx={{ mt: 1, fontSize: '0.75rem' }}
-                      >
-                        By: {task.createdBy?.username || 'Unknown'}
-                      </Typography>
                     </CardContent>
                   </Card>
                 ))}
+                {onCreateTask && (
+                  <Button
+                    startIcon={<AddIcon />}
+                    onClick={() => onCreateTask(status)}
+                    fullWidth
+                    sx={{ mt: 2 }}
+                  >
+                    Add Task
+                  </Button>
+                )}
               </Box>
-              <Button
-                startIcon={<AddIcon />}
-                onClick={() => onCreateTask(status)}
-                sx={{ mt: 2 }}
-                variant="text"
-                fullWidth
-              >
-                Add Task
-              </Button>
             </Paper>
           </Grid>
         ))}

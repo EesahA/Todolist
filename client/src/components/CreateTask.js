@@ -16,26 +16,22 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { createTask } from '../services/api';
+import useTask from '../hooks/useTask';
 
 const CreateTask = ({ open, onClose, onTaskCreated, initialStatus = 'Backlog' }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [deadline, setDeadline] = useState(null);
-  const [priority, setPriority] = useState('medium');
   const [status, setStatus] = useState(initialStatus);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const { user } = useAuth();
+  const { fetchTasks } = useTask();
 
   useEffect(() => {
     setStatus(initialStatus);
   }, [initialStatus]);
-
-  const priorities = [
-    { value: 'high', label: 'High', color: 'error.main' },
-    { value: 'medium', label: 'Medium', color: 'warning.main' },
-    { value: 'low', label: 'Low', color: 'success.main' }
-  ];
 
   const statuses = ['Backlog', 'In Progress', 'Blocked', 'Complete'];
 
@@ -50,39 +46,36 @@ const CreateTask = ({ open, onClose, onTaskCreated, initialStatus = 'Backlog' })
     }
 
     try {
-      const response = await fetch('http://localhost:5003/api/tasks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          title,
-          description,
-          deadline: deadline ? deadline.toISOString() : null,
-          priority,
-          status
-        })
-      });
+      const taskData = {
+        title: title.trim(),
+        description: description.trim(),
+        status
+      };
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to create task');
+      // Only add deadline if it's set
+      if (deadline) {
+        taskData.deadline = deadline.toISOString();
       }
+
+      console.log('Creating task with data:', taskData);
+      const response = await createTask(taskData);
+      console.log('Task created:', response.data);
 
       setSuccess('Task created successfully!');
       setTitle('');
       setDescription('');
       setDeadline(null);
-      setPriority('medium');
       setStatus(initialStatus);
       
+      // Fetch updated tasks list
+      await fetchTasks();
+      
       if (onTaskCreated) {
-        onTaskCreated(data);
+        onTaskCreated(response.data);
       }
     } catch (err) {
-      setError(err.message || 'Failed to create task');
+      console.error('Error creating task:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to create task');
     }
   };
 
@@ -129,27 +122,8 @@ const CreateTask = ({ open, onClose, onTaskCreated, initialStatus = 'Backlog' })
                 sx={{ flex: 1 }}
               />
             </LocalizationProvider>
-            
-            <FormControl sx={{ flex: 1 }}>
-              <InputLabel>Priority</InputLabel>
-              <Select
-                value={priority}
-                label="Priority"
-                onChange={(e) => setPriority(e.target.value)}
-              >
-                {priorities.map((p) => (
-                  <MenuItem 
-                    key={p.value} 
-                    value={p.value}
-                    sx={{ color: p.color }}
-                  >
-                    {p.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
 
-            <FormControl sx={{ flex: 1 }}>
+            <FormControl sx={{ flex: 1 }} required>
               <InputLabel>Status</InputLabel>
               <Select
                 value={status}
