@@ -5,7 +5,8 @@ import {
   updateTask,
   deleteTask,
   updateTaskStatus,
-  addCommentToTask
+  addCommentToTask,
+  getTaskById as getTaskByIdApi
 } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 
@@ -32,6 +33,17 @@ export const TaskProvider = ({ children }) => {
       setLoading(false);
     }
   }, [isAuthenticated]);
+
+  // Get task by ID
+  const getTaskById = async (id) => {
+    try {
+      setError(null);
+      return await getTaskByIdApi(id);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch task');
+      throw err;
+    }
+  };
 
   // Initial fetch of tasks
   useEffect(() => {
@@ -136,7 +148,8 @@ export const TaskProvider = ({ children }) => {
         removeTask,
         changeTaskStatus,
         addComment,
-        getTasksByStatus
+        getTasksByStatus,
+        getTaskById
       }}
     >
       {children}
