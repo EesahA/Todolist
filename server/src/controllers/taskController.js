@@ -8,6 +8,7 @@ exports.getAllTasks = async (req, res) => {
     const tasks = await Task.find()
       .populate('createdBy', 'username email')
       .populate('assignedTo', 'username email')
+      .populate('comments.user', 'username email')
       .sort({ createdAt: -1 });
     res.json(tasks);
   } catch (error) {
@@ -208,10 +209,15 @@ exports.addComment = async (req, res) => {
     });
 
     await task.save();
+    
+    // Populate all necessary fields
+    await task.populate('createdBy', 'username email');
+    await task.populate('assignedTo', 'username email');
     await task.populate('comments.user', 'username email');
 
     res.json(task);
   } catch (error) {
+    console.error('Error adding comment:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
