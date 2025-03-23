@@ -1,4 +1,4 @@
-import { validateEmail, validatePassword } from '../../utils/auth';
+import { validateEmail, validatePassword } from '../../../utils/auth';
 
 describe('Auth Utilities', () => {
   describe('validateEmail', () => {

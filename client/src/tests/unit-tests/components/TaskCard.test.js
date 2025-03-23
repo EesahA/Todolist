@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import TaskCard from '../../components/TaskCard';
+import TaskCard from '../../../components/TaskCard';
 
 // Mock the date-fns format function
 jest.mock('date-fns', () => ({
@@ -14,7 +14,7 @@ describe('TaskCard Component', () => {
     title: 'Test Task',
     description: 'This is a test task',
     status: 'In Progress',
-    deadline: '2024-03-15',
+    deadline: '2024-03-20',
     createdBy: {
       username: 'testuser'
     }
