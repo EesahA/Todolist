@@ -64,6 +64,32 @@ export const authService = {
         error: error.response?.data?.message || error.message 
       };
     }
+  },
+
+  // Update user
+  updateUser: async (userData) => {
+    try {
+      const response = await apiClient.put('/users/me', userData);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message
+      };
+    }
+  },
+
+  // Change password
+  changePassword: async (passwordData) => {
+    try {
+      const response = await apiClient.post('/users/change-password', passwordData);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message
+      };
+    }
   }
 };
 
