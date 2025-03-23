@@ -91,4 +91,54 @@ exports.login = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+// Change password
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = req.user;
+
+    // Check if current password is correct
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Password change error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Update user
+exports.updateUser = async (req, res) => {
+  try {
+    const { username } = req.body;
+    const user = req.user;
+
+    // Check if username is already taken
+    const existingUser = await User.findOne({ username, _id: { $ne: user._id } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username is already taken' });
+    }
+
+    // Update user
+    user.username = username;
+    await user.save();
+
+    res.json({
+      id: user._id,
+      username: user.username,
+      email: user.email
+    });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 }; 
