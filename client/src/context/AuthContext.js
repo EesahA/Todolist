@@ -1,4 +1,4 @@
-import React, { createContext, useState, useCallback } from 'react';
+import React, { createContext, useState, useCallback, useEffect } from 'react';
 import { authService } from '../services/api';
 
 export const AuthContext = createContext();
@@ -7,10 +7,33 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = useCallback(async (email, password) => {
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const result = await authService.validateToken();
+          if (result.success) {
+            setUser(result.data.user);
+            setIsAuthenticated(true);
+          } else {
+            localStorage.removeItem('token');
+          }
+        } catch (error) {
+          localStorage.removeItem('token');
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
+  }, []);
+
+  const login = useCallback(async (credentials) => {
     try {
-      const result = await authService.login({ email, password });
+      const result = await authService.login(credentials);
       
       if (result.success) {
         localStorage.setItem('token', result.data.token);
@@ -50,6 +73,10 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setIsAuthenticated(false);
   }, []);
+
+  if (loading) {
+    return null; // or a loading spinner
+  }
 
   const value = {
     isAuthenticated,

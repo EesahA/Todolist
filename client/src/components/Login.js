@@ -29,8 +29,10 @@ const Login = () => {
     }
     
     try {
-      await login(email, password);
-      navigate('/');
+      const result = await login({ email, password });
+      if (result.success) {
+        navigate('/');
+      }
     } catch (err) {
       // Error is handled by the AuthContext
     }

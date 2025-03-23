@@ -322,67 +322,39 @@ const TaskList = ({ onCreateTask }) => {
                 overflow: 'auto'
               }}>
                 {tasksByStatus[status].map((task) => (
-                  <Card
+                  <Box
                     key={task._id}
-                    sx={{
-                      bgcolor: 'white',
-                      cursor: 'pointer',
-                      '&:hover': {
-                        boxShadow: 3
-                      }
-                    }}
                     onClick={() => handleTaskClick(task)}
                     draggable
                     onDragStart={(e) => handleDragStart(e, task)}
+                    sx={{ position: 'relative' }}
                   >
-                    <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'medium' }}>
-                            {task.title}
-                          </Typography>
-                          {task.description && (
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                              {task.description}
-                            </Typography>
-                          )}
-                          {task.deadline && (
-                            <Typography 
-                              variant="body2" 
-                              sx={{ 
-                                mt: 1,
-                                color: isOverdue(task.deadline) ? 'error.main' : 'text.secondary',
-                                fontWeight: isOverdue(task.deadline) ? 'medium' : 'regular'
-                              }}
-                            >
-                              Due: {format(new Date(task.deadline), 'MMM d, yyyy')}
-                              {isOverdue(task.deadline) && ' (Overdue)'}
-                            </Typography>
-                          )}
-                        </Box>
-                        <Box 
-                          sx={{ 
-                            display: 'flex', 
-                            gap: 1 
-                          }}
-                          onClick={(e) => e.stopPropagation()} // Prevent card click when clicking buttons
-                        >
-                          <IconButton 
-                            size="small" 
-                            onClick={() => handleEditClick(task)}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton 
-                            size="small" 
-                            onClick={() => handleDeleteClick(task._id)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
+                    <TaskCard task={task} />
+                    <Box 
+                      sx={{ 
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        display: 'flex',
+                        gap: 1,
+                        zIndex: 1
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleEditClick(task)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleDeleteClick(task._id)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
                 ))}
                 {onCreateTask && (
                   <Button
