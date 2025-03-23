@@ -6,7 +6,7 @@ import TaskCard from '../../components/TaskCard';
 // Mock the date-fns format function
 jest.mock('date-fns', () => ({
   format: jest.fn(() => 'Mar 15'),
-  isAfter: jest.fn(() => true)  // Changed to true to avoid "Overdue" text
+  isAfter: jest.fn(() => true)  // Set to true to avoid "Overdue" text
 }));
 
 describe('TaskCard Component', () => {
