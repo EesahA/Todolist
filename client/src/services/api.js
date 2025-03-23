@@ -51,6 +51,19 @@ export const authService = {
         error: error.response?.data?.message || error.message 
       };
     }
+  },
+
+  // Validate token
+  validateToken: async () => {
+    try {
+      const response = await apiClient.get('/users/me');
+      return { success: true, data: { user: response.data } };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error.response?.data?.message || error.message 
+      };
+    }
   }
 };
 
