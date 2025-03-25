@@ -70,8 +70,8 @@ I've implemented several strategies to keep TaskFlow running smoothly:
 
 ### Deployment
 TaskFlow is deployed using modern cloud infrastructure:
-- **Frontend**:
-- **Backend**: 
+- **Frontend**: Hosted using render: https://todolist-frontend-rao2.onrender.com
+- **Backend**: Hosted using render: https://todolist-backend-3qah.onrender.com
 - **Database**: MongoDB Atlas for reliable, scalable data storage
 
 
