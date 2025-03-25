@@ -2,7 +2,6 @@ services:
   - type: web
     name: taskflow-backend
     env: node
-    rootDir: server
     buildCommand: cd server && npm install
     startCommand: cd server && npm start
     envVars:
