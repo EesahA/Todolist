@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: taskflow-frontend
+    env: node
+    rootDir: client
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: REACT_APP_API_URL
+        sync: false
+      - key: REACT_APP_CLIENT_URL
+        sync: false 
