@@ -3,10 +3,13 @@ services:
     name: taskflow-frontend
     env: node
     rootDir: client
+    nodeVersion: 18.17.0
     buildCommand: npm install && npm run build
     startCommand: npx serve -s build -l $PORT
     envVars:
       - key: REACT_APP_API_URL
         sync: false
       - key: REACT_APP_CLIENT_URL
-        value: https://taskflow-frontend.onrender.com 
+        value: https://taskflow-frontend.onrender.com
+    healthCheckPath: /
+    autoDeploy: true 
