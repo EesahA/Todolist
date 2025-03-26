@@ -52,19 +52,13 @@ const CreateTask = ({ open, onClose, onTaskCreated, initialStatus = 'Backlog' })
         status
       };
 
-      // Only add deadline if it's set
       if (deadline) {
         taskData.deadline = deadline.toISOString();
       }
 
-      console.log('Creating task with data:', taskData);
       const response = await createTask(taskData);
-      console.log('Task created:', response.data);
-
-      // Close the dialog first
       onClose();
       
-      // Then update the task list with current view mode
       await fetchTasks(viewMode);
       
       // Reset the form
